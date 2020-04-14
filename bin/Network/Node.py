@@ -34,6 +34,9 @@ class Node(object):
 
         self.time = 0
 
+        # wait for child growing up to a passenger (exp time)
+        self.child_passenger = [[]]
+
         self.passenger = {}
         self.total_p = 0
         self.total_served_p = 0
@@ -154,7 +157,24 @@ class Node(object):
         rd = np.random.uniform(0, range, size)
         return 1- np.exp( - self.arr_rate* rd/np.sum(rd) )
 
+    def passenger_generator(self, timehorizon):
+        time = 0
+        self.child_passenger = [0]*timehorizon
+        for time in range(timehorizon):
+            self.child_passenger[time] = []
+            randomness = np.random.uniform(low=0, high=1, size=(len(self.dest)))
+            pp_toss = np.greater(self.arr_prob_set, randomness)
+            for index, res in enumerate(pp_toss):
+                if (res):
+                    dest = self.dest[index] 
+
+                    pid = f'{self.id}_{dest}_{time}'
+                    self.child_passenger[time].append( Passenger(pid=pid, ori=self.id, dest=dest, arr_time=time) )
+                    self.total_p += 1
+                    
+                    
     def new_passenger_arrive(self, routing):
+        '''
         randomness = np.random.uniform(low=0, high=1, size=(len(self.dest)))
 
         pp_toss = np.greater(self.arr_prob_set, randomness)
@@ -171,6 +191,13 @@ class Node(object):
 
                 logging.info(f'Time {self.time}: Pas {pid} arrived, ori={self.id}, dest={dest}')
                 self.total_p += 1
+        '''
+        if self.child_passenger[self.time]:
+            for p in self.child_passenger[self.time]:
+                p.get_schdule(routing)
+                self.passenger_arrive(p)
+                logging.info(f'Time {self.time}: Pas {p.id} arrived, ori={self.id}, dest={p.dest}')
+
 
     def match_demands(self, attri):
         # check if the vehicle leave the park

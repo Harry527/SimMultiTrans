@@ -37,20 +37,22 @@ def main():
     simu.set_multiprocessing(False)
 
     # simu.set_running_time(starttime='08:00:00', timehorizon=1, unit='hour')
-    simu.set_running_time(starttime='08:00:00', timehorizon=2.5, unit='hour')
+    simu.set_running_time(starttime='08:00:00', timehorizon=2.5, unit='min')
 
    
     simu.routing.set_routing_method(r_name)
     simu.rebalance.set_parameters(lazy=l, vrange=r)
     simu.rebalance.set_policy(p_name)
+
+    simu.initialize(seed=0)
     
     simu.run()
     simu.save_result(path_name=f'results/{p_name}__l={simu.rebalance.lazy}r={simu.rebalance.range}')
-    simu.plot.combination_queue_animation(mode='taxi', frames=100, autoplay=True)
+    # simu.plot.combination_queue_animation(mode='taxi', frames=100, autoplay=True)
     ''' '''
     plot = Plot(simu.graph, simu.time_horizon, simu.start_time)
-    plot.set_plot_theme('plotly_white')
-    plot.plot_topology()
+    plot.set_plot_theme('plotly_dark')
+    # plot.plot_topology()
 
     '''
     plot.plot_metrics_animation('taxi', [
@@ -59,7 +61,7 @@ def main():
     ])
     '''
     
-    plot.import_results(path_name=f'results/{p_name}_l={simu.rebalance.lazy}r={simu.rebalance.range}')
+    plot.import_results(path_name=f'results/{p_name}__l={simu.rebalance.lazy}r={simu.rebalance.range}')
     plot.combination_queue_animation(mode='taxi', frames=100, autoplay=True)
     plot.plot_passenger_queuelen_time(mode='taxi')
     plot.plot_passenger_waittime(mode='taxi')

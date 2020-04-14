@@ -133,16 +133,6 @@ class Simulator(object):
                     self.graph.graph_top[node]['node'].set_arrival_rate( rate_matrix[:,index] )
                     # print(self.graph.graph_top[node]['node'].arr_prob_set)
         
-        # save graph structure
-        file_path = 'results'
-        saved_graph = copy.deepcopy(self.graph)
-        for node in saved_graph.graph_top:
-            saved_graph.graph_top[node]['node'] = None
-
-        with open(f'{file_path}/city_topology.json', 'w') as json_file:
-            json.dump(saved_graph.graph_top, json_file) 
-        del saved_graph
-        
                 
     def import_vehicle_attribute(self, file_name):
         with open(f'{file_name}') as file_data:
@@ -159,6 +149,67 @@ class Simulator(object):
         self.routing = Routing(self.graph, self.vehicle_attri)
         self.rebalance = Rebalancing(self.graph, self.vehicle_attri)
 
+
+    def set_running_time(self, starttime, timehorizon, unit):
+        unit_trans = {
+            'day': 60*60*24,
+            'hour': 60*60,
+            'min': 60,
+            'sec': 1
+        }
+        self.start_time = datetime.strptime(starttime, '%H:%M:%S')
+        self.time_horizon = int(timehorizon*unit_trans[unit])
+
+        self.end_time = timedelta(seconds=self.time_horizon) + self.start_time
+        # self.start_time = starttime.strftime("%H:%M:%S")
+        print(f'Time horizon: {self.time_horizon}')
+        print(f'From {self.start_time.strftime("%H:%M:%S")} to {self.end_time.strftime("%H:%M:%S")}')
+
+        
+
+
+    def ori_dest_generator(self, method):
+        if ( method.equal('uniform') ):
+            # Generate random passengers
+            nodes_set = self.graph.get_allnodes()
+            ori = random.choice(nodes_set)
+            # print('ori: ',p_ori)
+            nodes_set.remove(ori)
+            #print(nodes_set)
+            dest = random.choice(nodes_set)            
+            return (ori, dest)
+
+    def initialize(self, seed=0):
+        print('Initializing .', end='')
+        np.random.seed(seed)
+        # save graph structure
+        file_path = 'results'
+        saved_graph = copy.deepcopy(self.graph)
+        for node in saved_graph.graph_top:
+            saved_graph.graph_top[node]['node'] = None
+
+        with open(f'{file_path}/city_topology.json', 'w') as json_file:
+            json.dump(saved_graph.graph_top, json_file) 
+        del saved_graph
+        print('.', end='')
+
+        cnt = len(self.graph.get_allnodes())
+        # reset data set length
+        for index, node in enumerate(self.graph.get_allnodes()):
+            for mode in self.vehicle_attri:
+                self.vehicle_queuelen[node][mode] = np.zeros(self.time_horizon)
+                self.passenger_queuelen[node][mode] = np.zeros(self.time_horizon)
+                self.passenger_waittime[node][mode] = 0
+            if index % (cnt/2) == 0:
+                print('.', end='')
+
+        # generate passengers
+        for index, node in enumerate(self.graph.get_allnodes()):
+            self.graph.graph_top[node]['node'].passenger_generator(self.time_horizon)
+            if index % (cnt/2) == 0:
+                print('.', end='')
+
+        
         # generate vehicles
         for mode in self.vehicle_attri:
             # for walk, assign 1 walk to each node initially
@@ -178,9 +229,10 @@ class Simulator(object):
                 self.total_triptime['reb'][mode] = 0
 
                 name_cnt = 0
-            
+
+                cnt = len(self.vehicle_attri[mode]['distrib'])
                 # initialize vehilce distribution
-                for node in self.vehicle_attri[mode]['distrib']:                
+                for index, node in enumerate(self.vehicle_attri[mode]['distrib']):
                     interarrival = 0
                     for locv in range(self.vehicle_attri[mode]['distrib'][node]):
                         v_attri = self.vehicle_attri[mode]
@@ -196,40 +248,10 @@ class Simulator(object):
                         elif (v.type == 'priv'):
                             # private vehicle wait at node
                             self.graph.graph_top[node]['node'].vehicle_arrive(v)
+                    if index % (cnt/4) == 0:
+                        print('.', end='')
+        print('Done!')
 
-    def set_running_time(self, starttime, timehorizon, unit):
-        unit_trans = {
-            'day': 60*60*24,
-            'hour': 60*60,
-            'min': 60,
-            'sec': 1
-        }
-        self.start_time = datetime.strptime(starttime, '%H:%M:%S')
-        self.time_horizon = int(timehorizon*unit_trans[unit])
-
-        self.end_time = timedelta(seconds=self.time_horizon) + self.start_time
-        # self.start_time = starttime.strftime("%H:%M:%S")
-        print(f'Time horizon: {self.time_horizon}')
-        print(f'From {self.start_time.strftime("%H:%M:%S")} to {self.end_time.strftime("%H:%M:%S")}')
-
-        # reset data set length
-        for node in self.graph.get_allnodes():
-            for mode in self.vehicle_attri:
-                self.vehicle_queuelen[node][mode] = np.zeros(self.time_horizon)
-                self.passenger_queuelen[node][mode] = np.zeros(self.time_horizon)
-                self.passenger_waittime[node][mode] = 0
-
-
-    def ori_dest_generator(self, method):
-        if ( method.equal('uniform') ):
-            # Generate random passengers
-            nodes_set = self.graph.get_allnodes()
-            ori = random.choice(nodes_set)
-            # print('ori: ',p_ori)
-            nodes_set.remove(ori)
-            #print(nodes_set)
-            dest = random.choice(nodes_set)            
-            return (ori, dest)
 
     def run(self):
         print('Simulation started: ')
@@ -385,7 +407,7 @@ class Simulator(object):
     def node_savedata(self, nid, timestep):
         node = self.graph.graph_top[nid]['node']
         for mode in self.vehicle_attri:
-            if (mode in node.mode):
+            if mode in node.mode:
                 self.passenger_queuelen[nid][mode][timestep] = len( node.passenger[mode] )
                 self.vehicle_queuelen[nid][mode][timestep] = len( node.vehicle[mode] )
 

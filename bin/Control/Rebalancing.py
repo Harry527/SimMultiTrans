@@ -5,6 +5,8 @@
 import numpy as np
 from scipy.optimize import linprog
 
+import warnings
+
 class Rebalancing(object):
     def __init__(self, graph, vehicle_attri):
         self.graph = graph
@@ -29,6 +31,7 @@ class Rebalancing(object):
         # np.set_printoptions(threshold=10000)
 
         self.costsensi_para = None
+        warnings.filterwarnings('ignore')
 
     def MaxWeight(self, mode, queue, server):
         # weight
