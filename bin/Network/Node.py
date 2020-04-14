@@ -108,7 +108,8 @@ class Node(object):
         self.park.append( (v, leavetime) )
 
     def vehicle_arrive(self, v):
-        logging.info(f'Time {self.time}: Vel {v.id} arrive at node {self.id}')
+        if v.mode != 'walk':
+            logging.info(f'Time {self.time}: Vel {v.id} arrive at node {self.id}')
         self.vehicle[v.mode].append(v)
         v.loc = self.id
         p_list = v.dropoff()            
@@ -131,15 +132,20 @@ class Node(object):
                 logging.info(f'Time {self.time}: Pas {p.id} arrived at {self.id}') 
 
         # if v arrive at final stop, then move to the park
-        if (not isVwalk):
-            if (v.finalstop(self.id)):
+        if not isVwalk:
+            if v.finalstop(self.id):
                 self.vehilce_leave(v)
                 self.vehicle_park(v, self.time+ v.park_time)
                 logging.info(f'Time {self.time}: Vel {v.id} parking at {self.id}')
 
     def vehilce_leave(self, v):
         self.vehicle[v.mode].remove(v)
-        logging.info(f'Time {self.time}: Vel {v.id} leave {self.id}')
+        if v.mode == 'walk':
+            return
+        if v.get_emptyseats():
+            logging.info(f'Time {self.time}: Vel {v.id} leave {self.id}')
+        else:
+            logging.info(f'Time {self.time}: Vel(empty) {v.id} leave {self.id}')
 
     def exp_arrival_prob(self, rate):
         # default: exponential distribution
@@ -207,19 +213,19 @@ class Node(object):
                 self.park.remove( (v, time) )
                 self.vehicle_arrive(v)
 
-        if ( len(self.passenger) != 0 ):
+        if self.passenger.keys():
             for mode in self.passenger:
                 for p in self.passenger[mode]:
-                    if ( len(self.vehicle[mode]) != 0 ):
+                    if self.vehicle[mode]:
                         v = self.vehicle[mode][0]
 
-                        if (v.pickup(p) and p.geton(self.id, v)):
+                        if v.pickup(p) and p.geton(self.id, v):
                             v.set_destination(p.get_nextstop(self.id))
                             self.passenger_leave(p)
                             logging.info(f'Time {self.time}: Pas {p.id} takes {v.id} at node {self.id}')
 
                             # if vehicle is full, then move to road
-                            if (v.get_emptyseats() == 0 or v.type == 'priv'):
+                            if v.get_emptyseats() == 0 or v.type == 'priv':
                                 self.vehilce_leave(v)
                                 self.road[v.nextstop].arrive(v)
 
@@ -243,17 +249,13 @@ class Node(object):
                         if (np.sum(reb_flow[mode]['p']) == 0):
                             return
                         
-                        # print(self.id)
-                        # print(reb_flow['nodes'], len(reb_flow['nodes']))
-                        # print(reb_flow[mode]['p'], len(reb_flow[mode]['p']))
-
-
                         dest = np.random.choice(reb_flow['nodes'], 1, p=reb_flow[mode]['p'])[0]
                         
                         if ( mode in self.graph_top[dest]['mode'] and dest != self.id ):
                             v.set_destination(dest)
                             self.vehilce_leave(v)
                             self.road[v.nextstop].arrive(v)
+                            # logging.info(f'Time {self.time}: Vel {v.id} is dispatched from {self.id} to {dest}')
      
 
 class Haversine:

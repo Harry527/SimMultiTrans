@@ -181,7 +181,7 @@ class Simulator(object):
 
     def initialize(self, seed=0):
         print('Initializing .', end='')
-        np.random.seed(seed)
+        
         # save graph structure
         file_path = 'results'
         saved_graph = copy.deepcopy(self.graph)
@@ -204,8 +204,9 @@ class Simulator(object):
                 print('.', end='')
 
         # generate passengers
+        np.random.seed(seed)
         for index, node in enumerate(self.graph.get_allnodes()):
-            self.graph.graph_top[node]['node'].passenger_generator(self.time_horizon)
+            self.graph.graph_top[node]['node'].passenger_generator(timehorizon=self.time_horizon)
             if index % (cnt/2) == 0:
                 print('.', end='')
 
@@ -270,7 +271,7 @@ class Simulator(object):
 
         # Time horizon
         for timestep in range(self.time_horizon):
-            reb_flag = False
+            # reb_flag = False
             # match demands first
             for node in self.graph.get_allnodes():
                 if ((timestep+1) % self.reb_time == 0):
@@ -287,7 +288,7 @@ class Simulator(object):
 
             # rebalancing
             if ((timestep+1) % self.reb_time == 0):
-                reb_flag = True
+                # reb_flag = True
                 for mode in reb_list:
                     queue_p = [ self.passenger_queuelen[node][mode][timestep-1] for node in self.graph.get_allnodes() ]
                     queue_v = [ self.vehicle_queuelen[node][mode][timestep-1] for node in self.graph.get_allnodes() ]
@@ -300,24 +301,6 @@ class Simulator(object):
                 for node in self.graph.get_allnodes():
                     self.node_rebalance(node, reb_trans)
                     self.node_savedata(node, timestep)
-
-            '''
-            if (self.multiprocessing_flag): 
-                task = []
-                for node in self.graph.get_allnodes():
-                    p = threading.Thread(
-                        target=self.node_task,
-                        args=[self.graph.graph_top[node]['node'], timestep, False, reb_flow]
-                    )
-                    # p.start()
-                    task.append(p)
-                for p in task:
-                    p.start()
-                    p.join()
-
-            else:
-                pass
-            '''
 
             if (timestep % (self.time_horizon/20) == 0):
                 print('-', end='')

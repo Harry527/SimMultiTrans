@@ -47,12 +47,11 @@ class Rebalancing(object):
         b_ub = np.zeros(shape=(self.size, self.size))
         for index, node in enumerate(self.graph.graph_top):
             b = np.zeros(self.size)
-            if (node not in self.k_near_nei):
+            if node not in self.k_near_nei:
                 dist_list = np.array( [ self.graph.graph_top[node]['nei'][dest]['dist']
-                for dest in self.graph.graph_top[node]['nei'] ] )
-                k = self.range
-                if (k > self.size-1):
-                    k = self.size-1
+                    for dest in self.graph.graph_top[node]['nei'] ] )
+  
+                k = self.size-1 if k > self.size-1 else self.range
                 # k = self.size-1
                 k_near_list = dist_list.argsort()[:k]
             else:
@@ -77,12 +76,11 @@ class Rebalancing(object):
         result = np.zeros(shape=(self.size,self.size))
         for index, node in enumerate(self.graph.graph_top):
             # b = np.zeros(self.size)
-            if (node not in self.k_near_nei):
+            if node not in self.k_near_nei:
                 dist_list = np.array( [ self.graph.graph_top[node]['nei'][dest]['dist']
-                for dest in self.graph.graph_top[node]['nei'] ] )
-                k = self.range
-                if (k > self.size-1):
-                    k = self.size-1
+                    for dest in self.graph.graph_top[node]['nei'] ] )
+                
+                k = self.size-1 if k > self.size-1 else self.range
                 # k = self.size-1
                 k_near_list = dist_list.argsort()[:k]
             else:
@@ -90,7 +88,7 @@ class Rebalancing(object):
 
             asy = np.array(queue)
             sum_rate = np.sum(asy[k_near_list]) 
-            if (sum_rate == 0):
+            if sum_rate == 0:
                 result[index,index] = 1
             else:
                 rate = np.zeros(self.size)

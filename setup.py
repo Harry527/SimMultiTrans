@@ -41,6 +41,7 @@ def main():
     
     print('Complete!')
 
+    '''
     print('Setting Input Data')
     try:
         empty_sts = os.path.getsize(f'{conf_path}/conf.json')
@@ -63,6 +64,7 @@ def main():
         json.dump(conf, json_file)
 
     print('Setup finished!')
+    '''
 
 if __name__ == "__main__":
     main()

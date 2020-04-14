@@ -18,11 +18,11 @@ def main():
     for l in lazyset:
         for r in rangeset:
     '''
-    l = 0
-    r = 20
+    l = 25
+    r = 50
     # p_name = 'Simplified_MaxWeight'
     r_name = 'taxi_walk_simplex'
-    p_name = 'Simplified_CostSensitive'
+    p_name = 'Simplified_MaxWeight'
 
     # create graph
     g = Graph()
@@ -37,7 +37,7 @@ def main():
     simu.set_multiprocessing(False)
 
     # simu.set_running_time(starttime='08:00:00', timehorizon=1, unit='hour')
-    simu.set_running_time(starttime='08:00:00', timehorizon=2.5, unit='min')
+    simu.set_running_time(starttime='08:00:00', timehorizon=2.5, unit='hour')
 
    
     simu.routing.set_routing_method(r_name)

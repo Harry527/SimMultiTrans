@@ -133,11 +133,11 @@ class Routing(object):
 
         # passenger will walk to a node within 400 meters
         walk_dist = 400
-        if (ori not in self.near_nei):
+        if ori not in self.near_nei:
             self.near_nei[ori] = ori_nei_id[np.where(ori_nei_dist <= walk_dist)[0]]
         # print(self.near_nei[ori])
 
-        if (len(self.near_nei[ori]) != 0):
+        if len(self.near_nei[ori]) != 0:
             # pick the smallest queue length node
             ori_walk_nei_len = np.array([ 
                 self.info['p_queue'][node]['taxi'][self.info['time']-1] - self.info['v_queue'][node]['taxi'][self.info['time']-1] 
@@ -175,14 +175,14 @@ class Routing(object):
         stops = ori
         path = {}
         # by scooter
-        if ( dest in self.graph.graph_top[ori]['nei'] ):
+        if dest in self.graph.graph_top[ori]['nei']:
             # path.append(self.get_edge(ori, dest))
             # print('dont need transfer')
             path.update({ori: {'dest': dest, 'info': self.pathinfo_generator(ori=ori, dest=dest, method='simplex')}})
             # print(path)
         else:
             # find nearest bus stop
-            if ( 'bus' not in self.graph.graph_top[ori]['node'].mode ):
+            if 'bus' not in self.graph.graph_top[ori]['node'].mode:
                 # print('find a bus stop')
                 for busstop in self.graph.graph_top[ori]['nei']:
                     # print(self.graph_top[busstop]['mode'])
@@ -193,7 +193,7 @@ class Routing(object):
                         stops = busstop
             
             # find transfer bus stop
-            if ( 'bus' in self.graph.graph_top[dest]['node'].mode ):
+            if 'bus' in self.graph.graph_top[dest]['node'].mode:
                 # path.append(self.get_edge(stops, dest))
                 # print('ready to get off')
                 path.update({stops: {'dest': dest, 'info': self.pathinfo_generator(ori=stops, dest=dest, method='simplex')}})
