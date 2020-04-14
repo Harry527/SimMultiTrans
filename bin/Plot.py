@@ -55,9 +55,6 @@ class Plot(object):
         with open(f'{path_name}/passenger_queue.json') as json_file:
             queue_p = json.load(json_file)
 
-        with open(f'{path_name}/passenger_queue.json') as json_file:
-            queue_p = json.load(json_file)
-
         with open(f'{path_name}/vehicle_queue.json') as json_file:
             queue_v = json.load(json_file)
 
@@ -418,7 +415,7 @@ class Plot(object):
         # print(self.passenger_waittime)
         y = [ self.waittime_p[node][mode] for node in x ]
         data_dict = { 
-            'type':'bar', 'x': x, 'y': y, 'marker_color': 'lightsalmon', 'text': [f'{m} min' for m in y],
+            'type':'bar', 'x': x, 'y': y, 'marker_color': 'indianred', 'text': [f'{m} min' for m in y],
         }
         fig_dict['data'].append(data_dict)
         fig = go.Figure(fig_dict)        
