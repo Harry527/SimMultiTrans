@@ -145,6 +145,12 @@ class Simulator(object):
 
         for mode in self.vehicle_attri:
         ''' 
+        # total_vehicle = {}
+        for mode in self.vehicle_attri:
+            self.vehicle_attri[mode]['total'] = 0
+            for node in self.vehicle_attri[mode]['distrib']:
+                self.vehicle_attri[mode]['total'] += self.vehicle_attri[mode]['distrib'][node]
+        # self.vehicle_attri[mode]['total'] = 
         # set routing policy and rebalancing policy
         self.routing = Routing(self.graph, self.vehicle_attri)
         self.rebalance = Rebalancing(self.graph, self.vehicle_attri)
@@ -274,13 +280,15 @@ class Simulator(object):
             # reb_flag = False
             # match demands first
             for node in self.graph.get_allnodes():
+                '''
                 if ((timestep+1) % self.reb_time == 0):
                     # reb_trans = {}
                     for mode in reb_list:
                         reb_trans[mode] = {}
                         reb_trans[mode]['reb'] = reb_flow[mode]['reb']
-                        if (reb_trans[mode]['reb']):
+                        if reb_trans[mode]['reb']:
                             reb_trans[mode]['p'] = reb_flow[mode]['p'][node]
+                '''
                         
                 self.node_match(node, timestep)
                 # save data for rebalancing
@@ -295,10 +303,16 @@ class Simulator(object):
 
                     # reb_flow[mode] = {}
                     reb_flow[mode]['p'], reb_flow[mode]['reb'] = self.rebalance.Dispatch_active(mode=mode, queue_p=queue_p, queue_v=queue_v)
-                    # print(reb_flow[mode]['p'])
+                    # print(reb_flow[mode]['p'], reb_flow[mode]['reb'])
 
                 # dispatch
                 for node in self.graph.get_allnodes():
+                    for mode in reb_list:
+                        reb_trans[mode] = {}
+                        reb_trans[mode]['reb'] = reb_flow[mode]['reb']
+                        if reb_trans[mode]['reb']:
+                            reb_trans[mode]['p'] = reb_flow[mode]['p'][node]
+                            
                     self.node_rebalance(node, reb_trans)
                     self.node_savedata(node, timestep)
 

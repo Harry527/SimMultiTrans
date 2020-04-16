@@ -435,10 +435,10 @@ class Plot(object):
         # average waiting time
         x = [ node for node in self.graph.get_allnodes() if (self.graph.graph_top[node]['mode'] != 'walk') ]
         # print(self.passenger_waittime)
-        y = np.around([ self.waittime_p[node][mode]/60.0 for node in x ], decimals=2)
+        wait_y = np.around([ self.waittime_p[node][mode]/60.0 for node in x ], decimals=2)
         data_dict = { 
-            'type':'bar', 'x': x, 'y': y, 
-            'name': 'Waiting Time', 'offsetgroup': '0', 'text': [f'{m} min' for m in y],
+            'type':'bar', 'x': x, 'y': wait_y, 
+            'name': 'Waiting Time', 'offsetgroup': '0', 'text': [f'{m} min' for m in wait_y],
             'hovertemplate': 'Region ID: %{x}'+'<br>Waiting Time: %{text}<br>'+'<extra></extra>',
             'marker_color': 'indianred', 'xaxis': 'x', 'yaxis': 'y'
         }
@@ -453,13 +453,13 @@ class Plot(object):
         }
 
         # passenger throughtput
-        y = np.around([
+        thrpt_y = np.around([
             (self.total_trip['total'][node][mode]-self.total_trip['reb'][node][mode])/float(self.time_horizon)*3600
             for node in x 
         ], decimals=2)
         data_dict = { 
-            'type':'bar', 'x': x, 'y': y, 
-            'name': 'Throughput', 'offsetgroup': '1', 'text': [f'{m} {mode} per min' for m in y],
+            'type':'bar', 'x': x, 'y': thrpt_y, 
+            'name': 'Throughput', 'offsetgroup': '1', 'text': [f'{m} {mode} per min' for m in thrpt_y],
             'hovertemplate': 'Region ID: %{x}'+'<br>Throughput: %{text}<br>'+'<extra></extra>',
             'marker_color': 'lightsalmon', 'xaxis': 'x', 'yaxis': 'y2'
         }
@@ -480,16 +480,22 @@ class Plot(object):
         
         x = ['Riding', 'Rebalancing']
         if (sum_trip['reb'] == 0):
-            y = np.around([
-                self.total_tripdist['total'][mode]/float(sum_trip['total'])/1609.34, 0], decimals=2)
+            # y = np.around([self.total_tripdist['total'][mode]/float(sum_trip['total'])/1609.34, 0], decimals=2)
+            y = np.around([self.total_tripdist['total'][mode]/1609.34, 0], decimals=2)
         else:
+            y = np.around([
+                (self.total_tripdist['total'][mode]-self.total_tripdist['reb'][mode])/1609.34, 
+                self.total_tripdist['reb'][mode]/1609.34
+            ], decimals=2)
+            '''
             y = np.around([
                 (self.total_tripdist['total'][mode]-self.total_tripdist['reb'][mode])/float(sum_trip['total']-sum_trip['reb'])/1609.34, 
                 self.total_tripdist['reb'][mode]/float(sum_trip['reb'])/1609.34
             ], decimals=2)
+            '''
         color = ['#80DEEA', '#0097A7']
         data_dict = { 
-            'title': 'Average Trip Distance (mile)', 'titlefont': {'size': 16}, 'titleposition': 'bottom center',
+            'title': 'Total Trip Distance (mile)', 'titlefont': {'size': 16}, 'titleposition': 'bottom center',
             'type':'pie', 'labels': x, 'values': y, 
             'textposition': 'inside', 'textinfo': 'percent+label', 'textfont_size': 16,
             'name': 'Total Trip Distance',
@@ -501,16 +507,22 @@ class Plot(object):
 
         x = ['Riding', 'Rebalancing']
         if (sum_trip['reb'] == 0):
-            y = np.around([
-                self.total_triptime['total'][mode]/float(sum_trip['total'])/1609.34, 0], decimals=2)
+            # y = np.around([self.total_triptime['total'][mode]/float(sum_trip['total'])/1609.34, 0], decimals=2)
+            y = np.around([self.total_triptime['total'][mode]/1609.34, 0], decimals=2)
         else:
+            y = np.around([
+                (self.total_triptime['total'][mode]-self.total_triptime['reb'][mode])/3600.0, 
+                self.total_triptime['reb'][mode]/3600.0
+            ], decimals=2)
+            '''
             y = np.around([
                 (self.total_triptime['total'][mode]-self.total_triptime['reb'][mode])/float(sum_trip['total']-sum_trip['reb'])/3600.0, 
                 self.total_triptime['reb'][mode]/float(sum_trip['reb'])/3600.0
             ], decimals=2)
+            '''
         color = ['#81D4FA', '#0288D1']
         data_dict = { 
-            'title': 'Average Trip Time (hour)', 'titlefont': {'size': 16}, 'titleposition': 'bottom center',
+            'title': 'Total Trip Time (hour)', 'titlefont': {'size': 16}, 'titleposition': 'bottom center',
             'type':'pie', 'labels': x, 'values': y, 
             'textposition': 'inside', 'textinfo': 'percent+label', 'textfont_size': 16,
             'name': 'Total Trip Time', 
@@ -522,6 +534,7 @@ class Plot(object):
 
         # general metrics
         # total trips
+        '''
         x = ['Total Trips']
         y = [sum_trip['total']]
         data_dict = { 
@@ -567,6 +580,57 @@ class Plot(object):
             'title': '', 'showgrid': False, 'ticks': '', 'showticklabels': False, 'showline': False,
             'domain': [0.6, 1], 'anchor': 'x2', 'range': [0, y[0]*2.7], 'zerolinecolor': '#E0E0E0'
         }
+        '''
+        # metrics table
+        header = {
+            'font_size': 16,
+            'align': 'center',
+            'values': ['Metric', 'Total', 'Rebalancing', 'Variance']
+        }
+        reb_div = float(sum_trip['total']) if sum_trip['total']!=0 else 1.0
+        
+        wait_y = np.array( [y for y in wait_y if y!=0] )
+        thrpt_y = np.array( [y for y in thrpt_y if y!=0] )
+
+        cells = {
+            'font_size': 14,
+            'height': 40,
+            'align': 'center',
+            'values': [
+                ['Arrivals', 'Trips', 'Averaged Miles Traveled', 'Averaged Minutes Traveled', 'Averaged Waiting Time', 'Average Throughput'],
+                [
+                    self.sum_totalarrival,
+                    sum_trip['total'], 
+                    np.around(self.total_tripdist['total'][mode]/float(sum_trip['total'])/1609.34, decimals=2),
+                    np.around(self.total_triptime['total'][mode]/float(sum_trip['total'])/60.0, decimals=2),
+                    np.around(np.mean(wait_y), decimals=2),
+                    np.around(np.mean(thrpt_y), decimals=2),
+                ],
+                [
+                    'N/A',
+                    sum_trip['reb'], 
+                    np.around(self.total_tripdist['reb'][mode]/reb_div/1609.34, decimals=2),
+                    np.around(self.total_triptime['reb'][mode]/reb_div/60.0, decimals=2),
+                    'N/A',
+                    'N/A'
+                ],
+                [
+                    'N/A',
+                    'N/A',
+                    'N/A', 
+                    'N/A',
+                    np.around(np.var(wait_y), decimals=2),
+                    np.around(np.var(thrpt_y), decimals=2),
+                ]
+            ]
+        }
+        data_dict = { 
+            # 'title': 'Average Trip Time (hour)', 'titlefont': {'size': 16}, 'titleposition': 'bottom center',
+            'type':'table', 'header': header, 'cells': cells, 'name': 'Table',
+            'domain':{'x': [0, 0.5], 'y': [0.55, 1]}
+        }
+        fig_dict['data'].append(data_dict)
+
         return fig_dict
 
 
@@ -601,10 +665,7 @@ class Plot(object):
         
         v_max = {
             'Waiting Time': [0,'yaxis'],
-            'Throughput': [0,'yaxis2'],
-            'Total Trips': [0,'yaxis3'],
-            'Total Miles Traveled': [0,'yaxis4'],
-            'Total Hours Traveled': [0,'yaxis5'],
+            'Throughput': [0,'yaxis2']
         }
 
         # uniform yaxis

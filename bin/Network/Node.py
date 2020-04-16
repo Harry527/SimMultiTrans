@@ -40,6 +40,7 @@ class Node(object):
         self.passenger = {}
         self.total_p = 0
         self.total_served_p = 0
+
         self.vehicle = {}
         self.p_wait ={}
         for mode in self.mode:
@@ -81,7 +82,7 @@ class Node(object):
         # self.passenger.append(p)
         mode = p.get_waitingmode(self.id)
         # print(mode)
-        if (mode != None):
+        if mode:
             self.passenger[mode].append(p)
             p.set_stoptime(self.time)
             # walk always available
@@ -92,7 +93,7 @@ class Node(object):
     def passenger_leave(self, p):
         # self.passenger.remove(p)
         mode = p.get_waitingmode(self.id)
-        if (mode != None):
+        if mode:
             waittime = self.time - p.get_stoptime()
             self.p_wait[mode].append(waittime)
             self.passenger[mode].remove(p)
@@ -142,7 +143,7 @@ class Node(object):
         self.vehicle[v.mode].remove(v)
         if v.mode == 'walk':
             return
-        if v.get_emptyseats():
+        if v.seats:
             logging.info(f'Time {self.time}: Vel {v.id} leave {self.id}')
         else:
             logging.info(f'Time {self.time}: Vel(empty) {v.id} leave {self.id}')
